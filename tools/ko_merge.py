@@ -49,13 +49,13 @@ def check(r):
     if JP.search(ko[k:]): err.append('가나/한자 잔류: ' + ''.join(JP.findall(ko[k:])))
     for seg in re.split(r'\\n|\{PC\}', ko):
         if width(seg) > 17: err.append('폭 %.1f: %s' % (width(seg), seg))
-    m = re.match(r'메뉴:(\d+)B', r[2])
+    m = re.match(r'(?:메뉴|보충):(\d+)B', r[2])
     if m and nbytes(ko) > int(m.group(1)): err.append('예산 초과 %dB>%sB' % (nbytes(ko), m.group(1)))
     return err
 
 
 def main(args):
-    tabs = {n: load(n) for n in ('scr', 'sys')}
+    tabs = {n: load(n) for n in ('scr', 'sys', 'scr2') if os.path.exists(os.path.join(ROOT, 'work', 'ko', n + '.tsv'))}
     idx = {r[0]: r for n in tabs for r in tabs[n][2]}
     for fn in [a for a in args if a != '--check']:
         for l in open(fn, encoding='utf-8'):

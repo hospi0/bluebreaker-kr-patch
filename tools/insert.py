@@ -91,6 +91,11 @@ def rebuild(d, b, offs, e, mine, tr, cmap):
     parts, pos, shifts = [], b, []
     for o in mine:
         new = encode(tr[o['id']], cmap)
+        if o['id'].startswith('C'):                              # 보충(tools/extract2.py) = 제자리 — 원래 길이, 남으면 반각 공백
+            room = o['end'] - o['start']
+            if len(new) > room:
+                raise SystemExit('⛔보충 %s 예산 %d B < %d B' % (o['id'], room, len(new)))
+            new += b' ' * (room - len(new))
         parts.append(d[pos:o['start']]); parts.append(new)
         shifts.append((o['start'] - b, len(new) - (o['end'] - o['start'])))
         pos = o['end']
@@ -109,11 +114,15 @@ def rebuild(d, b, offs, e, mine, tr, cmap):
 def main():
     sys.stdout.reconfigure(encoding='utf-8')
     scr_tr, sys_tr = load('scr'), load('sys')
+    if os.path.exists(os.path.join(ROOT, 'work', 'ko', 'scr2.tsv')):
+        scr_tr.update(load('scr2'))                              # 보충 추출(C#####)
     tr = {}
     errs = []
     for i, r in scr_tr.items():
         if r[5]:
             t = to_full(squeeze(r[5]))
+            if r[2] == '나레이션':                                # 실기 «나레이션 들여쓰기x» — 첫 줄 전각 공백 들여쓰기 뺌
+                t = t.lstrip('　')
             for seg in t.replace('{PC}', NL).split(NL):
                 if width(seg) > WIDTH:
                     errs.append('%s 폭 %.1f > %d: %s' % (i, width(seg), WIDTH, seg))
