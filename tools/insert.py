@@ -145,7 +145,7 @@ def main():
     for b, n, offs, e in B:
         mine = []
         while ui < len(units) and units[ui]['start'] < e:
-            if units[ui]['start'] >= b:
+            if units[ui]['start'] >= b and units[ui]['end'] <= e:          # 묶음 끝을 넘는 단위 = 앞 묶음의 잘린 찌꺼기 → 원문 그대로
                 mine.append(units[ui])
             ui += 1
         if not mine:
@@ -185,6 +185,9 @@ def main():
         files[f] = bytes(v)
     print('메뉴 %d자리 · 바뀐 파일 %s' % (nput, sorted(files)))
 
+    os.makedirs(os.path.join(ROOT, 'work', 'new'), exist_ok=True)       # 고친 파일 사본(분석용)
+    for f, v in files.items():
+        open(os.path.join(ROOT, 'work', 'new', f), 'wb').write(v)
     if '--dry' in sys.argv:
         print('(--dry: 디스크 안 씀)'); return
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

@@ -10,7 +10,8 @@ import struct
 
 
 def header(d, b):
-    """b 에 묶음 머리가 있으면 n(항목 수), 아니면 0"""
+    """b 에 묶음 머리가 있으면 n(항목 수), 아니면 0
+       ★이름표는 길이 자유(예: 0x44800 «BPAN011» → 첫 오프셋 0x48) — 2026-10-02 실기 멈춤 원인(4n+1 만 보던 판정이 놓침)"""
     if b + 8 > len(d):
         return 0
     f = struct.unpack_from('>I', d, b)[0]
@@ -18,12 +19,11 @@ def header(d, b):
         return 0
     for n in range(f // 4, 0, -1):
         lab = d[b + 4 * n:b + f - 1]
-        if 0 in lab:
+        if any(not 0x20 <= c < 0x7F for c in lab):
             continue
         o = [struct.unpack_from('>I', d, b + 4 * i)[0] for i in range(n)]
         if o[0] == f and all(x <= y for x, y in zip(o, o[1:])) and o[-1] < 0x10000:
             return n
-        return 0
     return 0
 
 
