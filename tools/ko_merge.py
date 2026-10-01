@@ -8,7 +8,7 @@ import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KO = os.path.join(ROOT, 'work', 'ko')
 TOK = re.compile(r'\{[^}]*\}|\\n')
-JP = re.compile(r'[\u3040-\u30fa\u30fc-\u30ff\u3400-\u9fff\uff66-\uff9f]')  # ・(30FB) 는 허용
+JP = re.compile(r'[\u3131-\u318e\u3040-\u30fa\u30fc-\u30ff\u3400-\u9fff\uff66-\uff9f]')  # ・(30FB) 는 허용
 
 
 def load(name):
