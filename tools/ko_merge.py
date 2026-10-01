@@ -35,7 +35,7 @@ def nbytes(s):
         elif t.startswith('{NMR:'): n += 6
         elif t.startswith('{MK'): n += 3
         elif t.startswith('{'): n += len(t) - 2
-        else: n += sum(1 if ord(c) < 0x80 else 2 for c in t)
+        else: n += sum(1 if ord(c) < 0x80 or 0xff61 <= ord(c) <= 0xff9f else 2 for c in t)
     return n
 
 
@@ -44,7 +44,9 @@ def check(r):
     if not ko: return []
     err = []
     if TOK.findall(src) != TOK.findall(ko): err.append('토큰 불일치')
-    if JP.search(ko): err.append('가나/한자 잔류: ' + ''.join(JP.findall(ko)))
+    k = 0                                    # 원문과 같은 머리(표 데이터 바이트 등)는 그대로 둔 것 → 검사 제외
+    while k < min(len(src), len(ko)) and src[k] == ko[k]: k += 1
+    if JP.search(ko[k:]): err.append('가나/한자 잔류: ' + ''.join(JP.findall(ko[k:])))
     for seg in re.split(r'\\n|\{PC\}', ko):
         if width(seg) > 17: err.append('폭 %.1f: %s' % (width(seg), seg))
     m = re.match(r'메뉴:(\d+)B', r[2])
