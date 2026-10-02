@@ -65,6 +65,8 @@ def encode(s, cmap):
             out += t[1:4].encode()
         elif t.startswith('{NMR:'):
             out += b'NMR' + t[5:-1].encode()
+        elif t.startswith('{NM:'):                                # NM + 4자(기술 설명의 «NM2000», tools/extract3.py)
+            out += b'NM' + t[4:-1].encode()
         elif t == '{sp}':
             out += b' '
         elif t.startswith('{a:'):
@@ -91,7 +93,7 @@ def rebuild(d, b, offs, e, mine, tr, cmap):
     parts, pos, shifts = [], b, []
     for o in mine:
         new = encode(tr[o['id']], cmap)
-        if o['id'].startswith('C'):                              # 보충(tools/extract2.py) = 제자리 — 원래 길이, 남으면 반각 공백
+        if o['id'].startswith(('C', 'D')):                       # 보충(tools/extract2.py·extract3.py) = 제자리 — 원래 길이, 남으면 반각 공백
             room = o['end'] - o['start']
             if len(new) > room:
                 raise SystemExit('⛔보충 %s 예산 %d B < %d B' % (o['id'], room, len(new)))
@@ -117,11 +119,14 @@ def main():
     scr_tr, sys_tr = load('scr'), load('sys')
     if os.path.exists(os.path.join(ROOT, 'work', 'ko', 'scr2.tsv')):
         scr_tr.update(load('scr2'))                              # 보충 추출(C#####)
+    if os.path.exists(os.path.join(ROOT, 'work', 'ko', 'sys2.tsv')):  # 보충 추출 3(D#####) — SCR.BIN 줄은 대사 쪽, 나머지는 메뉴 쪽
+        for k, r in load('sys2').items():
+            (scr_tr if r[1].startswith('SCR.BIN') else sys_tr)[k] = r
     tr = {}
     errs = []
     for i, r in scr_tr.items():
         if r[5]:
-            t = to_full(squeeze(r[5]), letters_only=i.startswith('C'))
+            t = to_full(squeeze(r[5]), letters_only=i.startswith(('C', 'D')))
             if r[2] == '나레이션':                                # 실기 «나레이션 들여쓰기x» — 첫 줄 전각 공백 들여쓰기 뺌
                 t = t.lstrip('　')
             for seg in t.replace('{PC}', NL).split(NL):
@@ -195,6 +200,10 @@ def main():
         files[f] = bytes(v)
     print('메뉴 %d자리 · 바뀐 파일 %s' % (nput, sorted(files)))
 
+    import gfx                                                   # 그림 글자(1CPT 그림 묶음 — tools/gfx.py, work/ko/gfx.tsv)
+    for f, v in gfx.build().items():
+        assert f not in files, f
+        files[f] = v
     os.makedirs(os.path.join(ROOT, 'work', 'new'), exist_ok=True)       # 고친 파일 사본(분석용)
     for f, v in files.items():
         open(os.path.join(ROOT, 'work', 'new', f), 'wb').write(v)

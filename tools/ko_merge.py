@@ -32,7 +32,7 @@ def nbytes(s):
     for t in re.split(r'(\{[^}]*\}|\\n)', s):
         if t == '\\n': n += 2
         elif t.startswith('{a:') or t == '{sp}': n += 1
-        elif t.startswith('{NMR:'): n += 6
+        elif t.startswith('{NMR:') or t.startswith('{NM:'): n += 6
         elif t.startswith('{MK'): n += 3
         elif t.startswith('{'): n += len(t) - 2
         else: n += sum(1 if ord(c) < 0x80 or 0xff61 <= ord(c) <= 0xff9f else 2 for c in t)
@@ -55,7 +55,7 @@ def check(r):
 
 
 def main(args):
-    tabs = {n: load(n) for n in ('scr', 'sys', 'scr2') if os.path.exists(os.path.join(ROOT, 'work', 'ko', n + '.tsv'))}
+    tabs = {n: load(n) for n in ('scr', 'sys', 'scr2', 'sys2') if os.path.exists(os.path.join(ROOT, 'work', 'ko', n + '.tsv'))}
     idx = {r[0]: r for n in tabs for r in tabs[n][2]}
     for fn in [a for a in args if a != '--check']:
         for l in open(fn, encoding='utf-8'):
