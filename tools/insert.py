@@ -28,12 +28,12 @@ def squeeze(s):
     return re.sub('([' + re.escape(PUNCT) + ']) (?! )', r'\1', s)
 
 
-def to_full(s):
-    """토큰 밖 ASCII 영숫자·괄호 → 전각"""
+def to_full(s, letters_only=False):
+    """토큰 밖 ASCII 영숫자·괄호 → 전각. letters_only(보충 제자리 줄) = 영문자만(4.KNJ 1바이트 칸에 숫자·부호 글자는 있고 영문자는 비어 있음 — 원문 반각 숫자 «0日目» 유지)"""
     out = []
     for t in re.split(r'(\{[^}]*\}|\\n)', s):
         if not TOK.fullmatch(t or 'x'):
-            t = ''.join(chr(ord(c) + 0xFEE0) if c.isascii() and (c.isalnum() or c in '()') else c for c in t)
+            t = ''.join(chr(ord(c) + 0xFEE0) if c.isascii() and (c.isalpha() if letters_only else (c.isalnum() or c in '()')) else c for c in t)
         out.append(t)
     return ''.join(out)
 
@@ -101,10 +101,11 @@ def rebuild(d, b, offs, e, mine, tr, cmap):
         pos = o['end']
     parts.append(d[pos:e])
     blk = bytearray(b''.join(parts))
+    starts = {o['start'] for o in mine}
     for k, off in enumerate(offs):
         no = off + sum(dl for s, dl in shifts if s < off)
         struct.pack_into('>I', blk, 4 * k, no)
-        if d[b + off] != blk[no]:                                # 검산: 스크립트 첫 바이트(명령)가 그대로인지
+        if d[b + off] != blk[no] and (off + b) not in starts:   # 검산: 스크립트 첫 바이트(명령)가 그대로인지(글로 시작하는 항목 = 아이템 설명 등은 제외)
             raise SystemExit('⛔오프셋 검산 실패 묶음 %X 항목 %d' % (b, k))
     while len(blk) > e - b and blk[-1] == 0:                     # 끝 00 은 덜어 낼 수 있음
         blk.pop()
@@ -120,7 +121,7 @@ def main():
     errs = []
     for i, r in scr_tr.items():
         if r[5]:
-            t = to_full(squeeze(r[5]))
+            t = to_full(squeeze(r[5]), letters_only=i.startswith('C'))
             if r[2] == '나레이션':                                # 실기 «나레이션 들여쓰기x» — 첫 줄 전각 공백 들여쓰기 뺌
                 t = t.lstrip('　')
             for seg in t.replace('{PC}', NL).split(NL):
