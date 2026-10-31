@@ -1,4 +1,4 @@
-# 블루 브레이커 ~검보다도 미소를~ (새턴 JP) 한글화
+# 블루 브레이커 \~검보다도 미소를\~ (새턴 JP) 한글화
 
 ## 내려받기
 - 최신 **v0.9** — [릴리즈](https://github.com/hospi0/bluebreaker-kr-patch/releases/latest)에서 `BlueBreaker_KR_v0.9.zip`
